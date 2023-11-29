@@ -12,7 +12,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] bool       m_noBlood = false;
     [SerializeField] GameObject m_slideDust;
 
-    [SerializeField] private PlayerInput _input;
+    [SerializeField] private float _speed;
 
     private Animator            m_animator;
     private Rigidbody2D         m_body2d;
@@ -37,6 +37,11 @@ public class PlayerController : MonoBehaviour
     private bool _inputDone;
     private bool _beatDone;
     private Action _actionDone;
+
+    private float _direction;
+    Vector2 transformPosition;
+    
+    private PlayerInput _input;
 
     private void Awake() {
         _input = new PlayerInput();
@@ -63,6 +68,8 @@ public class PlayerController : MonoBehaviour
         m_wallSensorR2 = transform.Find("WallSensor_R2").GetComponent<Sensor_HeroKnight>();
         m_wallSensorL1 = transform.Find("WallSensor_L1").GetComponent<Sensor_HeroKnight>();
         m_wallSensorL2 = transform.Find("WallSensor_L2").GetComponent<Sensor_HeroKnight>();
+
+        transformPosition = transform.position;
     }
 
     // Update is called once per frame
@@ -92,7 +99,14 @@ public class PlayerController : MonoBehaviour
     }
 
     private void MovePerformed(InputAction.CallbackContext obj) {
-        
+        if (!_inputDone && !_beatDone)
+        {
+            _inputTime = Time.time;
+            _inputDone = true;
+            _actionDone = global::Action.Move;
+            _direction = obj.ReadValue<float>();
+            Action();
+        }
     }
 
     private void Action() {
@@ -143,7 +157,14 @@ public class PlayerController : MonoBehaviour
     }
 
     private void Move() {
-        
+        if (_direction>0)
+        {
+            GetComponent<Rigidbody2D>().MovePosition((Vector2)transform.position + new Vector2(_speed,0));
+        }
+        else
+        {
+            GetComponent<Rigidbody2D>().MovePosition((Vector2)transform.position - new Vector2(_speed,0));
+        }
     }
 }
 

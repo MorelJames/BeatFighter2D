@@ -1,6 +1,8 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour
 {
@@ -9,6 +11,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField] float      m_rollForce = 6.0f;
     [SerializeField] bool       m_noBlood = false;
     [SerializeField] GameObject m_slideDust;
+
+    [SerializeField] private PlayerInput _input;
 
     private Animator            m_animator;
     private Rigidbody2D         m_body2d;
@@ -33,6 +37,23 @@ public class PlayerController : MonoBehaviour
     private bool _inputDone;
     private bool _beatDone;
     private Action _actionDone;
+
+    private void Awake() {
+        _input = new PlayerInput();
+    }
+
+    private void OnEnable() {
+        _input.Enable();
+
+        _input.Player.Move.performed += MovePerformed;
+        _input.Player.Attack.performed += AttackPerformed;
+        _input.Player.Block.performed += BlockPerformed;
+    }
+
+    private void OnDisable() {
+        _input.Disable();
+    }
+
     void Start()
     {
         m_animator = GetComponent<Animator>();
@@ -47,34 +68,35 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (_beatDone) return;
-        
-        if (!_inputDone)
+    }
+    
+    private void BlockPerformed(InputAction.CallbackContext obj) {
+        Debug.Log("performed");
+        if (!_inputDone && !_beatDone)
         {
-            if (Input.GetKeyDown("e"))
-            {
-                _inputTime = Time.time;
-                _inputDone = true;
-                _actionDone = global::Action.Block;
-            }
-            if(Input.GetMouseButtonDown(0))
-            {
-                _inputTime = Time.time;
-                _inputDone = true;
-                _actionDone = global::Action.Attack;
-            }
-        }
-        else
-        {
-            if (Mathf.Abs(_beatTime-_inputTime) < 0.3f)
-            {
-                Action();
-                _beatDone = true;
-            }
+            _inputTime = Time.time;
+            _inputDone = true;
+            _actionDone = global::Action.Block;
+            Action();
         }
     }
 
+    private void AttackPerformed(InputAction.CallbackContext obj) {
+        if (!_inputDone && !_beatDone)
+        {
+            _inputTime = Time.time;
+            _inputDone = true;
+            _actionDone = global::Action.Attack;
+            Action();
+        }
+    }
+
+    private void MovePerformed(InputAction.CallbackContext obj) {
+        
+    }
+
     private void Action() {
+        if (Mathf.Abs(_beatTime-_inputTime) > 0.4f) return;
         switch (_actionDone)
         {
             case global::Action.Attack:
@@ -83,7 +105,11 @@ public class PlayerController : MonoBehaviour
             case global::Action.Block:
                 Block();
                 break;
+            case global::Action.Move:
+                Move();
+                break;
         }
+        _beatDone = true;
         _inputDone = false;
     }
     
@@ -115,10 +141,15 @@ public class PlayerController : MonoBehaviour
         // Reset timer
         m_timeSinceAttack = 0.0f;
     }
+
+    private void Move() {
+        
+    }
 }
 
 enum Action
 {
     Block,
     Attack,
+    Move,
 }

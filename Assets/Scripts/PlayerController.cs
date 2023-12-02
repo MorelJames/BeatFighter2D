@@ -6,21 +6,11 @@ using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour
 {
-    [SerializeField] float      m_speed = 4.0f;
-    [SerializeField] float      m_jumpForce = 7.5f;
-    [SerializeField] float      m_rollForce = 6.0f;
-    [SerializeField] bool       m_noBlood = false;
-    [SerializeField] GameObject m_slideDust;
-
     [SerializeField] private float _speed;
-
+    [SerializeField] private float _moveDuration;
+    [SerializeField] private AnimationCurve _moveCurve;
+    
     private Animator            m_animator;
-    private Rigidbody2D         m_body2d;
-    private Sensor_HeroKnight   m_groundSensor;
-    private Sensor_HeroKnight   m_wallSensorR1;
-    private Sensor_HeroKnight   m_wallSensorR2;
-    private Sensor_HeroKnight   m_wallSensorL1;
-    private Sensor_HeroKnight   m_wallSensorL2;
     private bool                m_isWallSliding = false;
     private bool                m_grounded = false;
     private bool                m_rolling = false;
@@ -39,10 +29,20 @@ public class PlayerController : MonoBehaviour
     private Action _actionDone;
 
     private float _direction;
-    Vector2 transformPosition;
+    
+    private Vector2 _nextPos;
+    private Vector2 _startPos;
+
+    private Vector2 speedVector;
+
+    private float _elapsedTime;
+
+    private Rigidbody2D _rb;
     
     private PlayerInput _input;
 
+    private bool _isMoving = false;
+    
     private void Awake() {
         _input = new PlayerInput();
     }
@@ -62,19 +62,23 @@ public class PlayerController : MonoBehaviour
     void Start()
     {
         m_animator = GetComponent<Animator>();
-        m_body2d = GetComponent<Rigidbody2D>();
-        m_groundSensor = transform.Find("GroundSensor").GetComponent<Sensor_HeroKnight>();
-        m_wallSensorR1 = transform.Find("WallSensor_R1").GetComponent<Sensor_HeroKnight>();
-        m_wallSensorR2 = transform.Find("WallSensor_R2").GetComponent<Sensor_HeroKnight>();
-        m_wallSensorL1 = transform.Find("WallSensor_L1").GetComponent<Sensor_HeroKnight>();
-        m_wallSensorL2 = transform.Find("WallSensor_L2").GetComponent<Sensor_HeroKnight>();
 
-        transformPosition = transform.position;
+        speedVector = new Vector2(_speed, 0);
+        _rb = GetComponent<Rigidbody2D>();
     }
 
     // Update is called once per frame
-    void Update()
-    {
+    void Update() {
+        if (_isMoving)
+        {
+            _elapsedTime += Time.deltaTime;
+            float percentageComplete = _elapsedTime / _moveDuration;
+            
+            _rb.MovePosition(Vector2.Lerp(_startPos, _nextPos, _moveCurve.Evaluate(percentageComplete)));
+
+            if ((Vector2)transform.position == _nextPos) _isMoving = false;
+        }
+        
     }
     
     private void BlockPerformed(InputAction.CallbackContext obj) {
@@ -110,7 +114,7 @@ public class PlayerController : MonoBehaviour
     }
 
     private void Action() {
-        if (Mathf.Abs(_beatTime-_inputTime) > 0.4f) return;
+        if (Mathf.Abs(_beatTime-_inputTime) > 0.5f) return;
         switch (_actionDone)
         {
             case global::Action.Attack:
@@ -131,6 +135,7 @@ public class PlayerController : MonoBehaviour
         _beatTime = Time.time;
         _inputDone = false;
         _beatDone = false;
+        m_animator.SetInteger("AnimState", 0);
     }
 
     private void Block() {
@@ -157,14 +162,24 @@ public class PlayerController : MonoBehaviour
     }
 
     private void Move() {
+        _startPos = transform.position;
+        _elapsedTime = 0;
         if (_direction>0)
         {
-            GetComponent<Rigidbody2D>().MovePosition((Vector2)transform.position + new Vector2(_speed,0));
+            GetComponent<SpriteRenderer>().flipX = false;
+            _nextPos = (Vector2)transform.position + speedVector;
+            //GetComponent<Rigidbody2D>().velocity = new Vector2(_speed, 0);
+            //GetComponent<Rigidbody2D>().MovePosition((Vector2)transform.position + new Vector2(_speed,0));
         }
         else
         {
-            GetComponent<Rigidbody2D>().MovePosition((Vector2)transform.position - new Vector2(_speed,0));
+            GetComponent<SpriteRenderer>().flipX = true;
+            _nextPos = (Vector2)transform.position - speedVector;
+            //GetComponent<Rigidbody2D>().velocity = new Vector2(-_speed, 0);
+            //GetComponent<Rigidbody2D>().MovePosition((Vector2)transform.position - new Vector2(_speed,0));
         }
+        m_animator.SetInteger("AnimState", 1);
+        _isMoving = true;
     }
 }
 

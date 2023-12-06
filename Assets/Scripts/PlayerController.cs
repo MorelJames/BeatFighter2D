@@ -1,22 +1,16 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour
 {
-    [SerializeField] float      m_speed = 4.0f;
-    [SerializeField] float      m_jumpForce = 7.5f;
-    [SerializeField] float      m_rollForce = 6.0f;
-    [SerializeField] bool       m_noBlood = false;
-    [SerializeField] GameObject m_slideDust;
-
+    [SerializeField] private float _speed;
+    [SerializeField] private float _moveDuration;
+    [SerializeField] private AnimationCurve _moveCurve;
+    
     private Animator            m_animator;
-    private Rigidbody2D         m_body2d;
-    private Sensor_HeroKnight   m_groundSensor;
-    private Sensor_HeroKnight   m_wallSensorR1;
-    private Sensor_HeroKnight   m_wallSensorR2;
-    private Sensor_HeroKnight   m_wallSensorL1;
-    private Sensor_HeroKnight   m_wallSensorL2;
     private bool                m_isWallSliding = false;
     private bool                m_grounded = false;
     private bool                m_rolling = false;
@@ -33,48 +27,94 @@ public class PlayerController : MonoBehaviour
     private bool _inputDone;
     private bool _beatDone;
     private Action _actionDone;
+
+    private float _direction;
+    
+    private Vector2 _nextPos;
+    private Vector2 _startPos;
+
+    private Vector2 speedVector;
+
+    private float _elapsedTime;
+
+    private Rigidbody2D _rb;
+    
+    private PlayerInput _input;
+
+    private bool _isMoving = false;
+    
+    private void Awake() {
+        _input = new PlayerInput();
+    }
+
+    private void OnEnable() {
+        _input.Enable();
+
+        _input.Player.Move.performed += MovePerformed;
+        _input.Player.Attack.performed += AttackPerformed;
+        _input.Player.Block.performed += BlockPerformed;
+    }
+
+    private void OnDisable() {
+        _input.Disable();
+    }
+
     void Start()
     {
         m_animator = GetComponent<Animator>();
-        m_body2d = GetComponent<Rigidbody2D>();
-        m_groundSensor = transform.Find("GroundSensor").GetComponent<Sensor_HeroKnight>();
-        m_wallSensorR1 = transform.Find("WallSensor_R1").GetComponent<Sensor_HeroKnight>();
-        m_wallSensorR2 = transform.Find("WallSensor_R2").GetComponent<Sensor_HeroKnight>();
-        m_wallSensorL1 = transform.Find("WallSensor_L1").GetComponent<Sensor_HeroKnight>();
-        m_wallSensorL2 = transform.Find("WallSensor_L2").GetComponent<Sensor_HeroKnight>();
+
+        speedVector = new Vector2(_speed, 0);
+        _rb = GetComponent<Rigidbody2D>();
     }
 
     // Update is called once per frame
-    void Update()
-    {
-        if (_beatDone) return;
-        
-        if (!_inputDone)
+    void Update() {
+        if (_isMoving)
         {
-            if (Input.GetKeyDown("e"))
-            {
-                _inputTime = Time.time;
-                _inputDone = true;
-                _actionDone = global::Action.Block;
-            }
-            if(Input.GetMouseButtonDown(0))
-            {
-                _inputTime = Time.time;
-                _inputDone = true;
-                _actionDone = global::Action.Attack;
-            }
+            _elapsedTime += Time.deltaTime;
+            float percentageComplete = _elapsedTime / _moveDuration;
+            
+            _rb.MovePosition(Vector2.Lerp(_startPos, _nextPos, _moveCurve.Evaluate(percentageComplete)));
+
+            if ((Vector2)transform.position == _nextPos) _isMoving = false;
         }
-        else
+        
+    }
+    
+    private void BlockPerformed(InputAction.CallbackContext obj) {
+        Debug.Log("performed");
+        if (!_inputDone && !_beatDone)
         {
-            if (Mathf.Abs(_beatTime-_inputTime) < 0.3f)
-            {
-                Action();
-                _beatDone = true;
-            }
+            _inputTime = Time.time;
+            _inputDone = true;
+            _actionDone = global::Action.Block;
+            Action();
+        }
+    }
+
+    private void AttackPerformed(InputAction.CallbackContext obj) {
+        if (!_inputDone && !_beatDone)
+        {
+            _inputTime = Time.time;
+            _inputDone = true;
+            _actionDone = global::Action.Attack;
+            Action();
+        }
+    }
+
+    private void MovePerformed(InputAction.CallbackContext obj) {
+        if (!_inputDone && !_beatDone)
+        {
+            _inputTime = Time.time;
+            _inputDone = true;
+            _actionDone = global::Action.Move;
+            _direction = obj.ReadValue<float>();
+            Action();
         }
     }
 
     private void Action() {
+        if (Mathf.Abs(_beatTime-_inputTime) > 0.5f) return;
         switch (_actionDone)
         {
             case global::Action.Attack:
@@ -83,7 +123,11 @@ public class PlayerController : MonoBehaviour
             case global::Action.Block:
                 Block();
                 break;
+            case global::Action.Move:
+                Move();
+                break;
         }
+        _beatDone = true;
         _inputDone = false;
     }
     
@@ -91,6 +135,7 @@ public class PlayerController : MonoBehaviour
         _beatTime = Time.time;
         _inputDone = false;
         _beatDone = false;
+        m_animator.SetInteger("AnimState", 0);
     }
 
     private void Block() {
@@ -115,10 +160,32 @@ public class PlayerController : MonoBehaviour
         // Reset timer
         m_timeSinceAttack = 0.0f;
     }
+
+    private void Move() {
+        _startPos = transform.position;
+        _elapsedTime = 0;
+        if (_direction>0)
+        {
+            GetComponent<SpriteRenderer>().flipX = false;
+            _nextPos = (Vector2)transform.position + speedVector;
+            //GetComponent<Rigidbody2D>().velocity = new Vector2(_speed, 0);
+            //GetComponent<Rigidbody2D>().MovePosition((Vector2)transform.position + new Vector2(_speed,0));
+        }
+        else
+        {
+            GetComponent<SpriteRenderer>().flipX = true;
+            _nextPos = (Vector2)transform.position - speedVector;
+            //GetComponent<Rigidbody2D>().velocity = new Vector2(-_speed, 0);
+            //GetComponent<Rigidbody2D>().MovePosition((Vector2)transform.position - new Vector2(_speed,0));
+        }
+        m_animator.SetInteger("AnimState", 1);
+        _isMoving = true;
+    }
 }
 
 enum Action
 {
     Block,
     Attack,
+    Move,
 }

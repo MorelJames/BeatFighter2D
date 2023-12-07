@@ -20,7 +20,6 @@ public class PlayerController : MonoBehaviour
     private float               m_delayToIdle = 0.0f;
     private float               m_rollDuration = 8.0f / 14.0f;
     private float               m_rollCurrentTime;
-    // Start is called before the first frame update
 
     private float _beatTime;
     private float _inputTime;
@@ -42,6 +41,10 @@ public class PlayerController : MonoBehaviour
     private PlayerInput _input;
 
     private bool _isMoving = false;
+
+    private bool _getHit;
+
+    private bool _blocking;
     
     private void Awake() {
         _input = new PlayerInput();
@@ -66,8 +69,7 @@ public class PlayerController : MonoBehaviour
         speedVector = new Vector2(_speed, 0);
         _rb = GetComponent<Rigidbody2D>();
     }
-
-    // Update is called once per frame
+    
     void Update() {
         if (_isMoving)
         {
@@ -82,7 +84,6 @@ public class PlayerController : MonoBehaviour
     }
     
     private void BlockPerformed(InputAction.CallbackContext obj) {
-        Debug.Log("performed");
         if (!_inputDone && !_beatDone)
         {
             _inputTime = Time.time;
@@ -127,18 +128,34 @@ public class PlayerController : MonoBehaviour
                 Move();
                 break;
         }
+
+
         _beatDone = true;
         _inputDone = false;
     }
     
     public void HandleBeat() {
+        if (_getHit && !_blocking)
+        {
+            TakeDamage();
+        }
+        
         _beatTime = Time.time;
         _inputDone = false;
         _beatDone = false;
+        _getHit = false;
+        _blocking = false;
         m_animator.SetInteger("AnimState", 0);
     }
 
+    private void TakeDamage() {
+        _getHit = false;
+        _nextPos = (Vector2)transform.position - (speedVector * _direction);
+        m_animator.SetTrigger("Hurt");
+    }
+
     private void Block() {
+        _blocking = true;
         m_animator.SetTrigger("Block");
         m_animator.SetBool("IdleBlock", true);
     }
@@ -168,18 +185,18 @@ public class PlayerController : MonoBehaviour
         {
             GetComponent<SpriteRenderer>().flipX = false;
             _nextPos = (Vector2)transform.position + speedVector;
-            //GetComponent<Rigidbody2D>().velocity = new Vector2(_speed, 0);
-            //GetComponent<Rigidbody2D>().MovePosition((Vector2)transform.position + new Vector2(_speed,0));
         }
         else
         {
             GetComponent<SpriteRenderer>().flipX = true;
             _nextPos = (Vector2)transform.position - speedVector;
-            //GetComponent<Rigidbody2D>().velocity = new Vector2(-_speed, 0);
-            //GetComponent<Rigidbody2D>().MovePosition((Vector2)transform.position - new Vector2(_speed,0));
         }
         m_animator.SetInteger("AnimState", 1);
         _isMoving = true;
+    }
+
+    public void IsHit() {
+        _getHit = true;
     }
 }
 

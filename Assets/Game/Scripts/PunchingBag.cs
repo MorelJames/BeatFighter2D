@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -23,6 +24,7 @@ public class PunchingBag : MonoBehaviour
     private SpriteRenderer _spriteRenderer;
     private Animator m_animator;
 
+    private bool _hitAttack;
     // Start is called before the first frame update
     void Start() {
         _isAttacking = false;
@@ -45,7 +47,6 @@ public class PunchingBag : MonoBehaviour
     public void HandleBeat() {
         if (!_isAttacking)
         {
-            Debug.Log(_beatBeforeAttack);
             if (_beatBeforeAttack == 0)
             {
                 Attack();
@@ -59,29 +60,8 @@ public class PunchingBag : MonoBehaviour
                 _beatBeforeAttack--;
                 Pulse();
             }
-            /*switch (_beatBeforeAttack)
-            {
-                case 0:
-                    Attack();
-                    break;
-                case 1:
-                    PreparingAttack();
-                    _beatBeforeAttack--;
-                    break;
-                default:
-                    _beatBeforeAttack--;
-                    Pulse();
-                    break;
-            }*/
-        }
-        /*else
-        {
-            m_animator.SetBool("IsAttacking",false);
-            _beatBeforeAttack = _attackTempo;
-            m_animator.enabled = false;
-            _isAttacking = false;
 
-        }*/
+        }
     }
 
     private void PreparingAttack() {
@@ -104,9 +84,18 @@ public class PunchingBag : MonoBehaviour
         _beatBeforeAttack = _attackTempo;
         m_animator.enabled = false;
         _isAttacking = false;
+        _hitAttack = false;
     }
 
     private void Pulse() {
         transform.localScale = _baseSize * _pulseSize;
+    }
+
+    private void OnTriggerStay2D(Collider2D other) {
+        if (other.tag.Contains("Player") && _isAttacking && !_hitAttack)
+        {
+            other.GetComponent<PlayerController>().IsHit();
+            _hitAttack = true;
+        }
     }
 }

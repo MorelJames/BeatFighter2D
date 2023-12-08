@@ -196,7 +196,7 @@ public class PlayerController : MonoBehaviour
 
     public void TouchEnemy(Vector3 pos) {
         Debug.Log(Mathf.Abs(_inputTime - _beatTime));
-        if (Mathf.Abs(_inputTime - _beatTime) <= 0.3)
+        if (Mathf.Abs(_inputTime - _beatTime) <= 0.2)
         {
             DamagePopUp.Create(pos, 20, true);
         }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TreeEditor;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -9,24 +10,29 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float _speed;
     [SerializeField] private float _moveDuration;
     [SerializeField] private AnimationCurve _moveCurve;
+    private GameObject _hitBox;
+
+    #region Heroknight animator
+
+        private Animator            m_animator;
+        private bool                m_isWallSliding = false;
+        private bool                m_grounded = false;
+        private bool                m_rolling = false;
+        private int                 m_facingDirection = 1;
+        private int                 m_currentAttack = 0;
+        private float               m_timeSinceAttack = 0.0f;
+        private float               m_delayToIdle = 0.0f;
+        private float               m_rollDuration = 8.0f / 14.0f;
+        private float               m_rollCurrentTime;
+
+    #endregion
     
-    private Animator            m_animator;
-    private bool                m_isWallSliding = false;
-    private bool                m_grounded = false;
-    private bool                m_rolling = false;
-    private int                 m_facingDirection = 1;
-    private int                 m_currentAttack = 0;
-    private float               m_timeSinceAttack = 0.0f;
-    private float               m_delayToIdle = 0.0f;
-    private float               m_rollDuration = 8.0f / 14.0f;
-    private float               m_rollCurrentTime;
-    // Start is called before the first frame update
 
     private float _beatTime;
     private float _inputTime;
     private bool _inputDone;
     private bool _beatDone;
-    private Action _actionDone;
+    private Action? _actionDone;
 
     private float _direction;
     
@@ -42,6 +48,10 @@ public class PlayerController : MonoBehaviour
     private PlayerInput _input;
 
     private bool _isMoving = false;
+
+    private bool _getHit;
+
+    private bool _blocking;
     
     private void Awake() {
         _input = new PlayerInput();
@@ -65,9 +75,10 @@ public class PlayerController : MonoBehaviour
 
         speedVector = new Vector2(_speed, 0);
         _rb = GetComponent<Rigidbody2D>();
+        _hitBox = transform.Find("HitBox").gameObject;
+        _hitBox.SetActive(false);
     }
-
-    // Update is called once per frame
+    
     void Update() {
         if (_isMoving)
         {
@@ -82,7 +93,6 @@ public class PlayerController : MonoBehaviour
     }
     
     private void BlockPerformed(InputAction.CallbackContext obj) {
-        Debug.Log("performed");
         if (!_inputDone && !_beatDone)
         {
             _inputTime = Time.time;
@@ -127,23 +137,46 @@ public class PlayerController : MonoBehaviour
                 Move();
                 break;
         }
+
+
         _beatDone = true;
         _inputDone = false;
     }
     
     public void HandleBeat() {
+        if (_getHit && !_blocking)
+        {
+            TakeDamage();
+        }
+
+        if (_actionDone == global::Action.Attack)
+        {
+            _hitBox.SetActive(false);
+            _actionDone = global::Action.NoAction;
+        }
+        
         _beatTime = Time.time;
         _inputDone = false;
         _beatDone = false;
+        _getHit = false;
+        _blocking = false;
         m_animator.SetInteger("AnimState", 0);
     }
 
+    private void TakeDamage() {
+        _getHit = false;
+        _nextPos = (Vector2)transform.position - (speedVector * _direction);
+        m_animator.SetTrigger("Hurt");
+    }
+
     private void Block() {
+        _blocking = true;
         m_animator.SetTrigger("Block");
         m_animator.SetBool("IdleBlock", true);
     }
 
     private void Attack() {
+        _hitBox.SetActive(true); 
         m_currentAttack++;
 
         // Loop back to one after third attack
@@ -161,25 +194,39 @@ public class PlayerController : MonoBehaviour
         m_timeSinceAttack = 0.0f;
     }
 
+    public void TouchEnemy(Vector3 pos) {
+        Debug.Log(Mathf.Abs(_inputTime - _beatTime));
+        if (Mathf.Abs(_inputTime - _beatTime) <= 0.3)
+        {
+            DamagePopUp.Create(pos, 20, true);
+        }
+        else
+        {
+            DamagePopUp.Create(pos, 10, false);
+        }
+        
+    }
+
     private void Move() {
         _startPos = transform.position;
         _elapsedTime = 0;
         if (_direction>0)
         {
+            transform.localScale = new Vector3(1,1,1);
             GetComponent<SpriteRenderer>().flipX = false;
             _nextPos = (Vector2)transform.position + speedVector;
-            //GetComponent<Rigidbody2D>().velocity = new Vector2(_speed, 0);
-            //GetComponent<Rigidbody2D>().MovePosition((Vector2)transform.position + new Vector2(_speed,0));
         }
         else
         {
-            GetComponent<SpriteRenderer>().flipX = true;
+            transform.localScale = new Vector3(-1,1,1);
             _nextPos = (Vector2)transform.position - speedVector;
-            //GetComponent<Rigidbody2D>().velocity = new Vector2(-_speed, 0);
-            //GetComponent<Rigidbody2D>().MovePosition((Vector2)transform.position - new Vector2(_speed,0));
         }
         m_animator.SetInteger("AnimState", 1);
         _isMoving = true;
+    }
+
+    public void IsHit() {
+        _getHit = true;
     }
 }
 
@@ -188,4 +235,5 @@ enum Action
     Block,
     Attack,
     Move,
+    NoAction,
 }

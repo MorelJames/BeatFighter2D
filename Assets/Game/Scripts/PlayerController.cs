@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour
@@ -48,7 +49,14 @@ public class PlayerController : MonoBehaviour
     private bool _getHit;
 
     private bool _blocking;
-    
+
+    #region Timing Events
+    [Header("Timing Events")]
+    [SerializeField] private UnityEvent PerfectTiming = new UnityEvent();
+    [SerializeField] private UnityEvent GoodTiming = new UnityEvent();
+    [SerializeField] private UnityEvent BadTiming = new UnityEvent();
+    #endregion
+
     private void Awake() {
         _input = new PlayerInput();
     }
@@ -120,7 +128,21 @@ public class PlayerController : MonoBehaviour
     }
 
     private void Action() {
-        if (Mathf.Abs(_beatTime-_inputTime) > 0.5f) return;
+        if (Mathf.Abs(_beatTime-_inputTime) > 0.5f)
+        {
+            BadTiming?.Invoke();
+            return;
+        }
+
+        if(Mathf.Abs(_beatTime-_inputTime) <= 0.2f)
+        {
+            PerfectTiming?.Invoke();
+        }
+        else
+        {
+            GoodTiming?.Invoke();
+        }
+
         switch (_actionDone)
         {
             case global::Action.Attack:
@@ -133,7 +155,6 @@ public class PlayerController : MonoBehaviour
                 Move();
                 break;
         }
-
 
         _beatDone = true;
         _inputDone = false;

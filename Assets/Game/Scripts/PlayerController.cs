@@ -52,9 +52,9 @@ public class PlayerController : MonoBehaviour
 
     #region Timing Events
     [Header("Timing Events")]
-    [SerializeField] private UnityEvent PerfectTiming = new UnityEvent();
-    [SerializeField] private UnityEvent GoodTiming = new UnityEvent();
-    [SerializeField] private UnityEvent BadTiming = new UnityEvent();
+    [SerializeField] private UnityEvent PerfectAttackTiming = new UnityEvent();
+    [SerializeField] private UnityEvent GoodAttackTiming = new UnityEvent();
+    [SerializeField] private UnityEvent BadAttackTiming = new UnityEvent();
     #endregion
 
     private void Awake() {
@@ -130,17 +130,11 @@ public class PlayerController : MonoBehaviour
     private void Action() {
         if (Mathf.Abs(_beatTime-_inputTime) > 0.5f)
         {
-            BadTiming?.Invoke();
+            if(_actionDone == global::Action.Attack)
+            {
+                BadAttackTiming?.Invoke();
+            }
             return;
-        }
-
-        if(Mathf.Abs(_beatTime-_inputTime) <= 0.2f)
-        {
-            PerfectTiming?.Invoke();
-        }
-        else
-        {
-            GoodTiming?.Invoke();
         }
 
         switch (_actionDone)
@@ -193,6 +187,15 @@ public class PlayerController : MonoBehaviour
     }
 
     private void Attack() {
+        if (Mathf.Abs(_beatTime - _inputTime) <= 0.2f)
+        {
+            PerfectAttackTiming?.Invoke();
+        }
+        else
+        {
+            GoodAttackTiming?.Invoke();
+        }
+
         _hitBox.SetActive(true); 
         m_currentAttack++;
 

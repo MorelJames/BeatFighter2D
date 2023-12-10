@@ -55,6 +55,9 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private UnityEvent PerfectAttackTiming = new UnityEvent();
     [SerializeField] private UnityEvent GoodAttackTiming = new UnityEvent();
     [SerializeField] private UnityEvent BadAttackTiming = new UnityEvent();
+    [SerializeField] private UnityEvent BlockEvent = new UnityEvent();
+    [SerializeField] private UnityEvent OnGetHit = new UnityEvent();
+    [SerializeField] private UnityEvent OnMove = new UnityEvent();
     #endregion
 
     private void Awake() {
@@ -178,12 +181,14 @@ public class PlayerController : MonoBehaviour
         _getHit = false;
         _nextPos = (Vector2)transform.position - (speedVector * _direction);
         m_animator.SetTrigger("Hurt");
+        OnGetHit?.Invoke();
     }
 
     private void Block() {
         _blocking = true;
         m_animator.SetTrigger("Block");
         m_animator.SetBool("IdleBlock", true);
+        BlockEvent?.Invoke();
     }
 
     private void Attack() {
@@ -243,6 +248,7 @@ public class PlayerController : MonoBehaviour
         }
         m_animator.SetInteger("AnimState", 1);
         _isMoving = true;
+        OnMove?.Invoke();
     }
 
     public void IsHit() {

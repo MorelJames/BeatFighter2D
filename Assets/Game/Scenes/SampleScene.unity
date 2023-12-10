@@ -2731,15 +2731,96 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  PerfectTiming:
+  PerfectAttackTiming:
     m_PersistentCalls:
-      m_Calls: []
-  GoodTiming:
+      m_Calls:
+      - m_Target: {fileID: 1906493555}
+        m_TargetAssemblyTypeName: PlayerSFX, Assembly-CSharp
+        m_MethodName: PlayPerfectHit
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  GoodAttackTiming:
     m_PersistentCalls:
-      m_Calls: []
-  BadTiming:
+      m_Calls:
+      - m_Target: {fileID: 1906493555}
+        m_TargetAssemblyTypeName: PlayerSFX, Assembly-CSharp
+        m_MethodName: PlayGoodHit
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  BadAttackTiming:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1906493555}
+        m_TargetAssemblyTypeName: PlayerSFX, Assembly-CSharp
+        m_MethodName: PlayMissHit
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  BlockEvent:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1906493555}
+        m_TargetAssemblyTypeName: PlayerSFX, Assembly-CSharp
+        m_MethodName: PlayBlockHit
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  OnGetHit:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1906493555}
+        m_TargetAssemblyTypeName: PlayerSFX, Assembly-CSharp
+        m_MethodName: PlayGetHit
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  OnMove:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1906493555}
+        m_TargetAssemblyTypeName: PlayerSFX, Assembly-CSharp
+        m_MethodName: PlayMove
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!4 &1906493549 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8413529789942519730, guid: a4b4a6d32bcb19248a754d6602ffc7e4, type: 3}
@@ -2757,9 +2838,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 026268174e6704f4aaeaf95cb1e8d5bf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  missHit: {fileID: 0}
-  goodHit: {fileID: 0}
-  perfectHit: {fileID: 0}
+  missHit: {fileID: 8300000, guid: d46323e22e74e46baa241cbf48c85671, type: 3}
+  goodHit: {fileID: 8300000, guid: 2829a5212f9da134e88443a1f91d0e48, type: 3}
+  perfectHit: {fileID: 8300000, guid: 80502e18f68bb734b9dded7bb8d2e750, type: 3}
+  block: {fileID: 8300000, guid: c5dea467677cdd449a7f8190f8453783, type: 3}
+  getHit: {fileID: 8300000, guid: ed4692eea77a5e5438f764a3cfaed7bd, type: 3}
+  move: {fileID: 8300000, guid: 35bda0c39b1fbe64196a669bfb99757d, type: 3}
   _audioSource: {fileID: 1906493556}
 --- !u!82 &1906493556
 AudioSource:
